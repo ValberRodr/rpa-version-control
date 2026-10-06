@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using RpaVersionControl.Core.Models;
 
@@ -32,6 +33,8 @@ public sealed partial class DashboardPage : Page, IRefreshable
             : "—";
 
         SubtitleText.Text = $"{user.DisplayName} • dados compartilhados em {layout.Root}";
-        RecentList.ItemsSource = changes.Take(8).ToList();
+        var recent = changes.Take(8).ToList();
+        RecentList.ItemsSource = recent;
+        RecentEmptyState.Visibility = recent.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 }

@@ -29,12 +29,20 @@
             </NavigationView.MenuItems>
 
             <NavigationView.PaneFooter>
-                <StackPanel Margin="12,8">
-                    <TextBlock x:Name="UserNameText" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="UserRoleText"
-                               FontSize="12"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                </StackPanel>
+                <Grid Margin="12,8" ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <PersonPicture x:Name="UserAvatar" Width="32" Height="32"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock x:Name="UserNameText" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="UserRoleText"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                </Grid>
             </NavigationView.PaneFooter>
 
             <Frame x:Name="ContentFrame"/>

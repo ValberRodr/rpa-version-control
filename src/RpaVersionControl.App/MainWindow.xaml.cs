@@ -45,6 +45,7 @@ public sealed partial class MainWindow : Window
         var services = App.Current.Services;
         var user = services.Users.GetCurrent();
         UserNameText.Text = user.DisplayName;
+        UserAvatar.DisplayName = user.DisplayName;
 
         var layout = await services.RootProvider.TryGetAsync();
         if (layout is null)

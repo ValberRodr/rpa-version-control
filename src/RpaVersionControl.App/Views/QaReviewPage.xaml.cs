@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using RpaVersionControl.App.Converters;
 using RpaVersionControl.App.ViewModels;
 using RpaVersionControl.Core.Models;
 
@@ -36,7 +37,7 @@ public sealed partial class QaReviewPage : Page
 
             IdText.Text = _change.Id;
             ProjectText.Text = $"{_change.ProjectName} • revisão {_change.CurrentRevisionNumber}";
-            StatusInfo.Message = _change.Status.ToString();
+            StatusInfo.Message = ChangeStatusToLabelConverter.Describe(_change.Status);
             DeveloperText.Text = $"DEV: {_change.DeveloperDisplayName} ({_change.DeveloperWindowsUser})";
             IncidentText.Text = $"Incidente / solicitação: {_change.IncidentReference}";
             ReasonText.Text = $"Motivo: {_change.Reason}";

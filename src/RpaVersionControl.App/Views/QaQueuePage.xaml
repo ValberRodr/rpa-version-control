@@ -15,6 +15,20 @@
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </StackPanel>
 
+        <StackPanel x:Name="EmptyState"
+                    Grid.Row="2"
+                    Spacing="8"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    MaxWidth="360"
+                    Visibility="Collapsed">
+            <FontIcon Glyph="&#xE73E;" FontSize="32" HorizontalAlignment="Center"
+                      Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            <TextBlock Text="Nenhuma revisão pendente" Style="{StaticResource EmptyStateStyle}" FontWeight="SemiBold"/>
+            <TextBlock Text="Quando um desenvolvedor enviar uma alteração, ela aparecerá aqui para revisão."
+                       Style="{StaticResource EmptyStateStyle}"/>
+        </StackPanel>
+
         <ListView x:Name="QueueList" Grid.Row="2" SelectionMode="None">
             <ListView.ItemTemplate>
                 <DataTemplate>
@@ -35,7 +49,7 @@
                                            TextTrimming="CharacterEllipsis"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             </StackPanel>
-                            <TextBlock Grid.Column="2" Text="{Binding Status}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Style="{StaticResource StatusTextStyle}" VerticalAlignment="Center"/>
                             <Button Grid.Column="3" Content="Revisar" Tag="{Binding Id}" Click="Review_Click"/>
                         </Grid>
                     </Border>

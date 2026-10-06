@@ -15,6 +15,20 @@
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </StackPanel>
 
+        <StackPanel x:Name="EmptyState"
+                    Grid.Row="2"
+                    Spacing="8"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    MaxWidth="360"
+                    Visibility="Collapsed">
+            <FontIcon Glyph="&#xE9D9;" FontSize="32" HorizontalAlignment="Center"
+                      Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            <TextBlock Text="Nenhuma alteração sua por aqui ainda" Style="{StaticResource EmptyStateStyle}" FontWeight="SemiBold"/>
+            <TextBlock Text="Vá até Projetos e escolha 'Enviar nova versão' para submeter uma alteração à QA."
+                       Style="{StaticResource EmptyStateStyle}"/>
+        </StackPanel>
+
         <ListView x:Name="ChangesList" Grid.Row="2" SelectionMode="None">
             <ListView.ItemTemplate>
                 <DataTemplate>
@@ -34,7 +48,7 @@
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                            TextTrimming="CharacterEllipsis"/>
                             </StackPanel>
-                            <TextBlock Grid.Column="2" Text="{Binding Status}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Style="{StaticResource StatusTextStyle}" VerticalAlignment="Center"/>
                             <Button Grid.Column="3" Content="Abrir" Tag="{Binding Id}" Click="Open_Click"/>
                         </Grid>
                     </Border>

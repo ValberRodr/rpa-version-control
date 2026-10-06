@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using RpaVersionControl.App.Converters;
 using RpaVersionControl.Core.Models;
 using RpaVersionControl.Core.Services;
 
@@ -46,7 +47,7 @@ public sealed partial class ChangeDetailPage : Page
         _change = change;
         IdText.Text = _change.Id;
         ProjectText.Text = _change.ProjectName;
-        StatusInfo.Message = _change.Status.ToString();
+        StatusInfo.Message = ChangeStatusToLabelConverter.Describe(_change.Status);
         StatusInfo.Severity = _change.Status switch
         {
             ChangeStatus.Published => InfoBarSeverity.Success,

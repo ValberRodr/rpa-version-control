@@ -19,9 +19,11 @@ public sealed partial class MyChangesPage : Page, IRefreshable
 
         var user = services.Users.GetCurrent();
         var changes = await services.Changes.ListAsync(layout);
-        ChangesList.ItemsSource = changes
+        var mine = changes
             .Where(x => string.Equals(x.DeveloperWindowsUser, user.WindowsUser, StringComparison.OrdinalIgnoreCase))
             .ToList();
+        ChangesList.ItemsSource = mine;
+        EmptyState.Visibility = mine.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void Open_Click(object sender, RoutedEventArgs e)

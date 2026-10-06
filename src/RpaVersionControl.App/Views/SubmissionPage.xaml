@@ -34,17 +34,27 @@
                          MinHeight="72"/>
 
                 <TextBox x:Name="FolderBox" Header="Pasta candidata" IsReadOnly="True"/>
-                <Button Content="Selecionar pasta desenvolvida" Click="PickFolder_Click"/>
+                <Button Click="PickFolder_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE8B7;" FontSize="13"/>
+                        <TextBlock Text="Selecionar pasta desenvolvida"/>
+                    </StackPanel>
+                </Button>
 
                 <InfoBar x:Name="PreviewInfo" IsOpen="False"/>
 
-                <Button Content="Comparar com versão oficial"
-                        Style="{StaticResource AccentButtonStyle}"
-                        Click="Preview_Click"/>
-                <Button x:Name="SubmitButton"
-                        Content="Submeter para QA"
-                        IsEnabled="False"
-                        Click="Submit_Click"/>
+                <Button Style="{StaticResource AccentButtonStyle}" Click="Preview_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE8AB;" FontSize="13"/>
+                        <TextBlock Text="Comparar com versão oficial"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="SubmitButton" IsEnabled="False" Click="Submit_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE898;" FontSize="13"/>
+                        <TextBlock Text="Submeter para QA"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </ScrollViewer>
 
@@ -69,10 +79,11 @@
                                 <TextBlock Text="{Binding Kind}" FontWeight="SemiBold"/>
                                 <TextBlock Text="{Binding Path}" TextTrimming="CharacterEllipsis"/>
                             </StackPanel>
-                            <TextBlock Grid.Column="1"
-                                       HorizontalAlignment="Right">
-                                <Run Text="+"/>
-                                <Run Text="{Binding LinesAdded}"/>
+                            <TextBlock Grid.Column="1" HorizontalAlignment="Right">
+                                <Run Text="+" Foreground="{StaticResource SuccessBrush}"/>
+                                <Run Text="{Binding LinesAdded}" Foreground="{StaticResource SuccessBrush}"/>
+                                <Run Text=" −" Foreground="{StaticResource DangerBrush}"/>
+                                <Run Text="{Binding LinesDeleted}" Foreground="{StaticResource DangerBrush}"/>
                             </TextBlock>
                         </Grid>
                     </DataTemplate>

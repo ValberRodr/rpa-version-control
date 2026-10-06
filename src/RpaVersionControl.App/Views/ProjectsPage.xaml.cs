@@ -18,7 +18,9 @@ public sealed partial class ProjectsPage : Page, IRefreshable
         var layout = await services.RootProvider.TryGetAsync();
         if (layout is null) return;
 
-        ProjectsList.ItemsSource = await services.Projects.ListAsync(layout);
+        var projects = await services.Projects.ListAsync(layout);
+        ProjectsList.ItemsSource = projects;
+        EmptyState.Visibility = projects.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         NewProjectButton.Visibility = await services.Security.IsAdminAsync(layout)
             ? Visibility.Visible
             : Visibility.Collapsed;
