@@ -66,28 +66,34 @@ artifacts\RpaVersionControl-win-x64.zip
 
 O publish é self-contained. O usuário abre `RpaVersionControl.App.exe`.
 
-## Instalação corporativa via PowerShell
+## Baixar o executável via PowerShell (sem instalar)
 
 Todo push em `main` publica automaticamente um build no GitHub Actions e atualiza a
-release `latest` do repositório. Para instalar ou atualizar em qualquer máquina
-Windows, sem precisar abrir o navegador:
+release `latest` do repositório. O app é portátil — não há instalador, não precisa
+de permissão de administrador e nada é gravado no registro do Windows.
+
+Baixar uma vez numa máquina sem proxy:
 
 ```powershell
-irm https://raw.githubusercontent.com/ValberRodr/rpa-version-control/main/scripts/install.ps1 | iex
+iwr https://raw.githubusercontent.com/ValberRodr/rpa-version-control/main/scripts/download-exe.ps1 -OutFile download-exe.ps1
+.\download-exe.ps1
 ```
 
-Para configurar a pasta compartilhada e criar atalho já na instalação, baixe o
-script primeiro (comandos `irm | iex` não aceitam parâmetros nomeados):
+Numa rede corporativa com proxy, informe o endereço do proxy:
 
 ```powershell
-iwr https://raw.githubusercontent.com/ValberRodr/rpa-version-control/main/scripts/install.ps1 -OutFile install.ps1
-.\install.ps1 -SharedRoot "\\servidor\pasta\RPA-Version-Control" -Shortcut -Launch
+iwr https://raw.githubusercontent.com/ValberRodr/rpa-version-control/main/scripts/download-exe.ps1 -OutFile download-exe.ps1 -Proxy "http://proxy.empresa.local:8080"
+.\download-exe.ps1 -Proxy "http://proxy.empresa.local:8080"
 ```
 
-O script baixa `RpaVersionControl-win-x64.zip` da release mais recente, extrai em
-`%LOCALAPPDATA%\RpaVersionControl` (preservando um `shared-root.txt` já existente, a
-menos que `-SharedRoot` seja informado) e, opcionalmente, cria atalho e abre o app.
-Rodar o mesmo comando de novo atualiza a instalação para o build mais recente.
+Se o proxy autenticar pelo usuário Windows atual (NTLM/Kerberos), adicione
+`-ProxyUseDefaultCredentials` nos dois comandos. Se exigir usuário/senha
+explícitos, embuta na própria URL do proxy:
+`http://usuario:senha@proxy.empresa.local:8080`.
+
+O script baixa `RpaVersionControl-win-x64.zip` da release mais recente e extrai em
+`%USERPROFILE%\Downloads\RpaVersionControl`. Para atualizar depois, basta rodar o
+mesmo comando de novo (ele não atualiza nada automaticamente por conta própria).
 
 ## Configuração corporativa
 
