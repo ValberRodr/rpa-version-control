@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -27,3 +30,18 @@ jobs:
           name: RpaVersionControl-win-x64
           path: artifacts/RpaVersionControl-win-x64.zip
           if-no-files-found: error
+
+      - name: Publish/update "latest" GitHub Release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Build mais recente
+          body: |
+            Build automático gerado a partir do commit ${{ github.sha }}.
+
+            Baixe `RpaVersionControl-win-x64.zip`, extraia e execute `RpaVersionControl.App.exe`.
+            Antes de distribuir, ajuste o `shared-root.txt` incluído no zip para apontar para a
+            pasta compartilhada da sua rede.
+          files: artifacts/RpaVersionControl-win-x64.zip
+          make_latest: true
