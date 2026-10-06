@@ -38,6 +38,7 @@ public sealed partial class SettingsPage : Page, IRefreshable
         var isQa = await services.Security.IsQaAsync(layout);
         RoleText.Text = isAdmin ? "Administrador / QA" : isQa ? "QA" : "Desenvolvedor";
         SecurityCard.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
+        AuditCard.Visibility = isAdmin ? Visibility.Visible : Visibility.Collapsed;
 
         if (isAdmin)
         {
@@ -155,6 +156,32 @@ public sealed partial class SettingsPage : Page, IRefreshable
         catch (Exception ex)
         {
             await ShowErrorAsync(ex.Message);
+        }
+    }
+
+    private async void VerifyAudit_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var services = App.Current.Services;
+            var layout = await services.RootProvider.GetRequiredAsync();
+
+            if (!await services.Security.IsAdminAsync(layout))
+                throw new UnauthorizedAccessException("Somente administradores podem verificar a auditoria.");
+
+            var result = await services.Audit.VerifyChainAsync(layout);
+
+            AuditInfo.Severity = result.IsValid ? InfoBarSeverity.Success : InfoBarSeverity.Error;
+            AuditInfo.Message = result.IsValid
+                ? "Nenhuma adulteração detectada na trilha de auditoria."
+                : $"Adulteração detectada: a cadeia de auditoria quebra no evento {result.FirstBrokenEventId}.";
+            AuditInfo.IsOpen = true;
+        }
+        catch (Exception ex)
+        {
+            AuditInfo.Severity = InfoBarSeverity.Error;
+            AuditInfo.Message = ex.Message;
+            AuditInfo.IsOpen = true;
         }
     }
 

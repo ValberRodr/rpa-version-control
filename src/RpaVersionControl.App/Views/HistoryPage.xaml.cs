@@ -148,6 +148,109 @@ public sealed partial class HistoryPage : Page, IRefreshable
         }
     }
 
+    private async void CheckIntegrity_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedProject is null)
+        {
+            await ShowErrorAsync("Selecione um projeto.");
+            return;
+        }
+
+        try
+        {
+            var services = App.Current.Services;
+            var layout = await services.RootProvider.GetRequiredAsync();
+            if (!await services.Security.IsQaAsync(layout))
+                throw new UnauthorizedAccessException("Somente usuários QA podem verificar a integridade da produção.");
+
+            var report = await services.Workflow.BuildDriftReportAsync(layout, _selectedProject.Id);
+
+            var panel = new StackPanel { Spacing = 12, Width = 620 };
+
+            if (!report.HasDrift)
+            {
+                panel.Children.Add(new InfoBar
+                {
+                    IsOpen = true,
+                    Severity = InfoBarSeverity.Success,
+                    Message = $"Produção corresponde à versão aprovada v{report.ApprovedVersion}. Nenhuma edição não autorizada detectada."
+                });
+            }
+            else
+            {
+                panel.Children.Add(new InfoBar
+                {
+                    IsOpen = true,
+                    Severity = InfoBarSeverity.Error,
+                    Title = "Integridade COMPROMETIDA",
+                    Message = $"{report.Files.Count} arquivo(s) foram alterados em produção fora do fluxo de aprovação " +
+                              $"(fora da v{report.ApprovedVersion}). Esses arquivos não são confiáveis até serem restaurados ou reaprovados."
+                });
+
+                var filesPanel = new StackPanel { Spacing = 4 };
+                foreach (var file in report.Files)
+                {
+                    var modified = file.LastWriteTimeUtc is { } ts ? ts.ToLocalTime().ToString("g") : "desconhecido";
+                    filesPanel.Children.Add(new TextBlock
+                    {
+                        TextWrapping = TextWrapping.Wrap,
+                        Text = $"• {file.Path} [{file.Kind}] — editor suspeito: {file.SuspectedEditor ?? "desconhecido"} " +
+                               $"— modificado em: {modified}"
+                    });
+                }
+                panel.Children.Add(filesPanel);
+
+                var diff = new DiffViewer { Height = 320 };
+                diff.LoadPatch(report.Patch);
+                panel.Children.Add(diff);
+
+                panel.Children.Add(new TextBlock
+                {
+                    FontSize = 12,
+                    TextWrapping = TextWrapping.Wrap,
+                    Text = "O \"editor suspeito\" é o proprietário NTFS do arquivo (melhor esforço) — pode não refletir " +
+                           "exatamente quem fez a última edição, apenas uma pista para investigação.",
+                    Opacity = 0.8
+                });
+            }
+
+            var reasonBox = new TextBox
+            {
+                Header = "Motivo da restauração (obrigatório para restaurar)",
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                MinHeight = 80
+            };
+            if (report.HasDrift)
+                panel.Children.Add(reasonBox);
+
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = $"Integridade da produção — {report.ProjectName}",
+                Content = new ScrollViewer { Content = panel, MaxHeight = 560 },
+                PrimaryButtonText = report.HasDrift ? "Restaurar produção para a versão aprovada" : null,
+                CloseButtonText = "Fechar",
+                DefaultButton = ContentDialogButton.Close
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                return;
+
+            if (string.IsNullOrWhiteSpace(reasonBox.Text))
+                throw new InvalidOperationException("Informe o motivo da restauração.");
+
+            await services.Workflow.RestoreProductionToApprovedAsync(
+                layout, _selectedProject.Id, reasonBox.Text, services.Users.GetCurrent());
+
+            await ShowInfoAsync("Produção restaurada para a versão aprovada. A edição não autorizada foi sobrescrita.");
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync(ex.Message);
+        }
+    }
+
     private async Task ShowInfoAsync(string message)
     {
         var dialog = new ContentDialog

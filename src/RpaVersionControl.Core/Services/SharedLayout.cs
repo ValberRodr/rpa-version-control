@@ -18,6 +18,8 @@ public sealed class SharedLayout
 
     public string SecurityFile => Path.Combine(Config, "security.json");
     public string SequenceFile => Path.Combine(Config, "change-sequence.json");
+    public string AuditChainFile => Path.Combine(Config, "audit-chain.json");
+    public string AuditChainLock => Path.Combine(Locks, "audit-chain.lock");
     public string ProjectDirectory(string projectId) => Path.Combine(Projects, projectId);
     public string ProjectFile(string projectId) => Path.Combine(ProjectDirectory(projectId), "project.json");
     public string VersionsDirectory(string projectId) => Path.Combine(ProjectDirectory(projectId), "versions");

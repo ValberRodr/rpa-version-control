@@ -178,6 +178,58 @@ public sealed class AuditEvent
     public string? TargetWindowsUser { get; set; }
     public string? TargetRole { get; set; }
     public string Message { get; set; } = string.Empty;
+    public string PreviousHash { get; set; } = string.Empty;
+    public string Hash { get; set; } = string.Empty;
+}
+
+public sealed class AuditChainState
+{
+    public string LastHash { get; set; } = string.Empty;
+}
+
+public sealed record AuditChainVerificationResult(bool IsValid, string? FirstBrokenEventId);
+
+/// <summary>
+/// A file found in production whose content does not match the last version approved by QA.
+/// Since every controlled file is only ever supposed to change through a reviewed change
+/// request, any such difference means the file was edited directly in production outside the
+/// app's workflow — its content is not trustworthy ("COMPROMETIDO") until restored or re-approved.
+/// </summary>
+public sealed class DriftedFileInfo
+{
+    public string Path { get; set; } = string.Empty;
+    public string Kind { get; set; } = string.Empty;
+    public bool IsBinary { get; set; }
+
+    /// <summary>
+    /// Best-effort NTFS owner of the file on disk. This is the account that owns the file,
+    /// which is usually (but not always) whoever created/last touched its ACL — Windows does
+    /// not track "last editor" without Advanced Auditing enabled on the server, so this is a
+    /// hint for investigation, not a forensic guarantee. Null when unavailable (non-Windows,
+    /// no permission to read the ACL, file removed, etc.).
+    /// </summary>
+    public string? SuspectedEditor { get; set; }
+
+    public DateTimeOffset? LastWriteTimeUtc { get; set; }
+}
+
+/// <summary>
+/// Report comparing the current contents of a project's production folder against the last
+/// version approved by QA. A non-empty <see cref="Files"/> list means production integrity is
+/// compromised: someone wrote to the official folder outside the submit/review flow.
+/// </summary>
+public sealed class DriftReport
+{
+    public string ProjectId { get; set; } = string.Empty;
+    public string ProjectName { get; set; } = string.Empty;
+    public int ApprovedVersion { get; set; }
+    public string ApprovedCommitSha { get; set; } = string.Empty;
+    public DateTimeOffset GeneratedAtUtc { get; set; } = DateTimeOffset.UtcNow;
+    public bool HasDrift { get; set; }
+    public List<DriftedFileInfo> Files { get; set; } = new();
+    public string Patch { get; set; } = string.Empty;
+
+    public const string IntegrityCompromisedStatus = "COMPROMETIDO";
 }
 
 public sealed class LocalAppSettings

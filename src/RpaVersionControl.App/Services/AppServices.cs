@@ -27,7 +27,7 @@ public sealed class AppServices : IDisposable
     {
         Projects = new ProjectStore(Json);
         Changes = new ChangeStore(Json, Locks);
-        Audit = new AuditStore(Json);
+        Audit = new AuditStore(Json, Locks);
         Git = new GitVersionService(Manifests);
         Workflow = new VersioningWorkflowService(Json, Projects, Changes, Audit, Locks, Manifests, Git);
         RootProvider = new SharedRootProvider(LocalSettings);

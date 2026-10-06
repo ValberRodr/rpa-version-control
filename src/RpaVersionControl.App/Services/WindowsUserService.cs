@@ -8,9 +8,13 @@ public sealed class WindowsUserService
 {
     public CurrentUser GetCurrent()
     {
+        // Audit trail, Git authorship and QA/Admin matching all key off this value, so a
+        // silent, domain-less fallback here would make those records ambiguous. Fail loudly
+        // instead of guessing an identity.
         var full = WindowsIdentity.GetCurrent().Name;
         if (string.IsNullOrWhiteSpace(full))
-            full = Environment.UserName;
+            throw new InvalidOperationException(
+                "Não foi possível determinar a identidade do usuário Windows atual.");
 
         return new CurrentUser(full, ToDisplayName(full), Environment.MachineName);
     }

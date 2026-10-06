@@ -1,3 +1,5 @@
+using System.Security.AccessControl;
+using System.Security.Principal;
 using RpaVersionControl.Core.Models;
 
 namespace RpaVersionControl.Core.Services;
@@ -209,7 +211,7 @@ public sealed class VersioningWorkflowService
             DiffRelativePath = Path.GetRelativePath(layout.Root, diffFile),
             CandidateManifestRelativePath = Path.GetRelativePath(layout.Root, manifestFile),
             CandidateManifestHash = preview.CandidateManifest.AggregateHash,
-            ChangedFiles = preview.Changes
+            ChangedFiles = preview.Changes.ToList()
         };
 
         change.CurrentRevisionNumber = revisionNumber;
@@ -461,6 +463,145 @@ public sealed class VersioningWorkflowService
         }
     }
 
+    /// <summary>
+    /// Compares the project's production folder against the last version approved by QA and
+    /// reports every file that differs — i.e. every file someone edited directly in production
+    /// instead of going through submit/review. Read-only; does not block or change anything.
+    /// </summary>
+    public async Task<DriftReport> BuildDriftReportAsync(
+        SharedLayout layout,
+        string projectId,
+        CancellationToken ct = default)
+    {
+        var project = await _projects.GetAsync(layout, projectId, ct)
+            ?? throw new InvalidOperationException("Projeto não encontrado.");
+
+        return await BuildDriftReportCoreAsync(project, ct);
+    }
+
+    private async Task<DriftReport> BuildDriftReportCoreAsync(ProjectDefinition project, CancellationToken ct)
+    {
+        var preview = await _git.PreviewAsync(project, project.OfficialPath, ct);
+
+        var files = preview.Changes.Select(change =>
+        {
+            var fullPath = Path.Combine(project.OfficialPath, change.Path.Replace('/', Path.DirectorySeparatorChar));
+            return new DriftedFileInfo
+            {
+                Path = change.Path,
+                Kind = change.Kind,
+                IsBinary = change.IsBinary,
+                SuspectedEditor = TryGetFileOwner(fullPath),
+                LastWriteTimeUtc = TryGetLastWriteTimeUtc(fullPath)
+            };
+        }).ToList();
+
+        return new DriftReport
+        {
+            ProjectId = project.Id,
+            ProjectName = project.Name,
+            ApprovedVersion = project.CurrentVersion,
+            ApprovedCommitSha = project.CurrentCommitSha,
+            HasDrift = files.Count > 0,
+            Files = files,
+            Patch = preview.Patch
+        };
+    }
+
+    /// <summary>
+    /// Forcibly re-syncs the production folder back to the content of the last version
+    /// approved by QA, overwriting any unauthorized edit made directly in production. This is
+    /// a corrective action, not a publish: it does not create a new version, since the result
+    /// is, by definition, identical to the version already on record as current.
+    /// </summary>
+    public async Task<DriftReport> RestoreProductionToApprovedAsync(
+        SharedLayout layout,
+        string projectId,
+        string reason,
+        CurrentUser qa,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new ArgumentException("Informe o motivo da restauração.");
+
+        await using var projectLock = await _locks.AcquireAsync(layout.ProjectLock(projectId), qa.WindowsUser, ct: ct);
+
+        var project = await _projects.GetAsync(layout, projectId, ct)
+            ?? throw new InvalidOperationException("Projeto não encontrado.");
+
+        var report = await BuildDriftReportCoreAsync(project, ct);
+        if (!report.HasDrift)
+            throw new InvalidOperationException("A produção já corresponde à versão aprovada; não há o que restaurar.");
+
+        var approvedManifest = await _json.ReadAsync<ManifestDocument>(
+            layout.VersionManifestFile(project.Id, project.CurrentVersion), ct)
+            ?? throw new InvalidOperationException("Manifesto da versão aprovada não encontrado.");
+
+        var snapshot = Path.Combine(Path.GetTempPath(), "RpaVersionControl", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(snapshot);
+        try
+        {
+            await _git.ExportCommitAsync(project, project.CurrentCommitSha, snapshot, ct);
+            await _manifests.ReplaceControlledTreeAsync(
+                snapshot, project.OfficialPath, approvedManifest.Files.Select(x => x.RelativePath), ct);
+
+            var verification = await _manifests.BuildAsync(project.OfficialPath, project.IgnorePatterns, ct);
+            if (!FileManifestService.Equivalent(verification, approvedManifest))
+                throw new IOException("A verificação pós-restauração falhou. A produção não corresponde à versão aprovada.");
+        }
+        finally
+        {
+            try { Directory.Delete(snapshot, recursive: true); } catch { }
+        }
+
+        var fileList = string.Join("; ", report.Files.Select(f =>
+            $"{f.Path} [{DriftReport.IntegrityCompromisedStatus}, editor suspeito: {f.SuspectedEditor ?? "desconhecido"}]"));
+
+        await _audit.AppendAsync(layout, new AuditEvent
+        {
+            ActorWindowsUser = qa.WindowsUser,
+            ActorDisplayName = qa.DisplayName,
+            Action = "UnauthorizedProductionEditOverwritten",
+            EntityType = "Project",
+            EntityId = project.Id,
+            ProjectId = project.Id,
+            TargetRole = "QA",
+            Message = $"{project.Name}: produção restaurada para v{project.CurrentVersion} por {qa.DisplayName}, " +
+                      $"sobrescrevendo edição(ões) não autorizada(s). Motivo: {reason.Trim()}. Arquivo(s): {fileList}."
+        }, ct);
+
+        return report;
+    }
+
+    private static string? TryGetFileOwner(string path)
+    {
+        if (!OperatingSystem.IsWindows())
+            return null;
+
+        try
+        {
+            if (!File.Exists(path)) return null;
+            var security = new FileInfo(path).GetAccessControl();
+            return security.GetOwner(typeof(NTAccount))?.Value;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static DateTimeOffset? TryGetLastWriteTimeUtc(string path)
+    {
+        try
+        {
+            return File.Exists(path) ? File.GetLastWriteTimeUtc(path) : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private async Task<ChangeRequest> ApproveAndPublishLockedAsync(
         SharedLayout layout,
         ChangeRequest change,
@@ -638,8 +779,11 @@ public sealed class VersioningWorkflowService
 
         if (!FileManifestService.Equivalent(approved, production))
             throw new InvalidOperationException(
-                "Drift detectado: arquivos controlados em produção foram alterados fora do aplicativo. " +
-                "A publicação foi bloqueada para evitar sobrescrita silenciosa.");
+                $"Integridade {DriftReport.IntegrityCompromisedStatus.ToLowerInvariant()}: arquivos controlados em produção " +
+                "foram alterados fora do fluxo de aprovação do aplicativo. A publicação foi bloqueada para evitar " +
+                "sobrescrita silenciosa. Gere o relatório de integridade do projeto para identificar os arquivos " +
+                "afetados e, se confirmado que a edição não foi autorizada, use a opção de restaurar a produção " +
+                "para a versão aprovada.");
     }
 
     private async Task NotifyDeveloperAsync(

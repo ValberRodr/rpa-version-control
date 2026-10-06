@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using RpaVersionControl.Core.Models;
+using RpaVersionControl.Core.Services;
 
 namespace RpaVersionControl.App.Views;
 
@@ -18,12 +19,31 @@ public sealed partial class ChangeDetailPage : Page
     {
         base.OnNavigatedTo(e);
 
-        var changeId = (string)e.Parameter;
-        var services = App.Current.Services;
-        var layout = await services.RootProvider.GetRequiredAsync();
-        _change = await services.Changes.GetAsync(layout, changeId);
-        if (_change is null) return;
+        try
+        {
+            var changeId = (string)e.Parameter;
+            var services = App.Current.Services;
+            var layout = await services.RootProvider.GetRequiredAsync();
+            _change = await services.Changes.GetAsync(layout, changeId);
+            if (_change is null) return;
 
+            var user = services.Users.GetCurrent();
+            var isOwner = string.Equals(_change.DeveloperWindowsUser, user.WindowsUser, StringComparison.OrdinalIgnoreCase);
+            if (!isOwner && !await services.Security.IsQaAsync(layout))
+                throw new UnauthorizedAccessException("Você não tem permissão para visualizar esta alteração.");
+
+            await BindChangeAsync(layout, _change);
+        }
+        catch (Exception ex)
+        {
+            _change = null;
+            await ShowErrorAsync(ex.Message);
+        }
+    }
+
+    private async Task BindChangeAsync(SharedLayout layout, ChangeRequest change)
+    {
+        _change = change;
         IdText.Text = _change.Id;
         ProjectText.Text = _change.ProjectName;
         StatusInfo.Message = _change.Status.ToString();
@@ -63,5 +83,17 @@ public sealed partial class ChangeDetailPage : Page
     {
         if (_change is not null)
             (App.Current.MainWindow)?.NavigateToSubmission(_change.ProjectId, _change.Id);
+    }
+
+    private async Task ShowErrorAsync(string message)
+    {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "Não foi possível concluir",
+            Content = message,
+            CloseButtonText = "OK"
+        };
+        await dialog.ShowAsync();
     }
 }

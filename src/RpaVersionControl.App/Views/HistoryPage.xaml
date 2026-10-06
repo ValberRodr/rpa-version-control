@@ -17,12 +17,14 @@
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </StackPanel>
 
-        <ComboBox x:Name="ProjectCombo"
-                  Grid.Row="2"
-                  Width="420"
-                  HorizontalAlignment="Left"
-                  DisplayMemberPath="Name"
-                  SelectionChanged="ProjectCombo_SelectionChanged"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12">
+            <ComboBox x:Name="ProjectCombo"
+                      Width="420"
+                      HorizontalAlignment="Left"
+                      DisplayMemberPath="Name"
+                      SelectionChanged="ProjectCombo_SelectionChanged"/>
+            <Button Content="Verificar integridade de produção" Click="CheckIntegrity_Click"/>
+        </StackPanel>
 
         <ListView x:Name="VersionsList" Grid.Row="4" SelectionMode="None">
             <ListView.ItemTemplate>

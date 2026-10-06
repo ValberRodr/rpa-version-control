@@ -1,3 +1,4 @@
+using Xunit;
 using RpaVersionControl.Core.Services;
 
 namespace RpaVersionControl.Core.Tests;
