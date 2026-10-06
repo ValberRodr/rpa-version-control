@@ -66,6 +66,29 @@ artifacts\RpaVersionControl-win-x64.zip
 
 O publish é self-contained. O usuário abre `RpaVersionControl.App.exe`.
 
+## Instalação corporativa via PowerShell
+
+Todo push em `main` publica automaticamente um build no GitHub Actions e atualiza a
+release `latest` do repositório. Para instalar ou atualizar em qualquer máquina
+Windows, sem precisar abrir o navegador:
+
+```powershell
+irm https://raw.githubusercontent.com/ValberRodr/rpa-version-control/main/scripts/install.ps1 | iex
+```
+
+Para configurar a pasta compartilhada e criar atalho já na instalação, baixe o
+script primeiro (comandos `irm | iex` não aceitam parâmetros nomeados):
+
+```powershell
+iwr https://raw.githubusercontent.com/ValberRodr/rpa-version-control/main/scripts/install.ps1 -OutFile install.ps1
+.\install.ps1 -SharedRoot "\\servidor\pasta\RPA-Version-Control" -Shortcut -Launch
+```
+
+O script baixa `RpaVersionControl-win-x64.zip` da release mais recente, extrai em
+`%LOCALAPPDATA%\RpaVersionControl` (preservando um `shared-root.txt` já existente, a
+menos que `-SharedRoot` seja informado) e, opcionalmente, cria atalho e abre o app.
+Rodar o mesmo comando de novo atualiza a instalação para o build mais recente.
+
 ## Configuração corporativa
 
 Opção mais simples para distribuição: coloque `shared-root.txt` ao lado do executável:
