@@ -1,0 +1,59 @@
+<Page
+    x:Class="RpaVersionControl.App.Views.ChangeDetailPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:RpaVersionControl.App.Controls">
+    <Grid Padding="{StaticResource PagePadding}" ColumnSpacing="18">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="400"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <ScrollViewer>
+            <StackPanel Spacing="12">
+                <TextBlock x:Name="IdText" Style="{StaticResource PageTitleStyle}"/>
+                <TextBlock x:Name="ProjectText" FontSize="18" FontWeight="SemiBold"/>
+                <InfoBar x:Name="StatusInfo" IsOpen="True"/>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Contexto do DEV" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="IncidentText"/>
+                        <TextBlock x:Name="ReasonText" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="SummaryText" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="ImpactText" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Retorno do QA" FontWeight="SemiBold"/>
+                        <ItemsControl x:Name="QaAnswersList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,6">
+                                        <TextBlock Text="{Binding Question}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Comment}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock x:Name="NoQaReturnText"
+                                   Text="Ainda não há retorno do QA."
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <Button x:Name="ResubmitButton"
+                        Content="Corrigir e reenviar"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Visibility="Collapsed"
+                        Click="Resubmit_Click"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <controls:DiffViewer x:Name="Diff" Grid.Column="1"/>
+    </Grid>
+</Page>

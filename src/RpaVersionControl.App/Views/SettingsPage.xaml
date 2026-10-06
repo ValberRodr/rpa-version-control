@@ -1,0 +1,84 @@
+<Page
+    x:Class="RpaVersionControl.App.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer>
+        <StackPanel Padding="{StaticResource PagePadding}" Spacing="18" MaxWidth="900" HorizontalAlignment="Left">
+            <StackPanel>
+                <TextBlock Text="Configurações" Style="{StaticResource PageTitleStyle}"/>
+                <TextBlock Text="Conexão com a pasta compartilhada e perfis de acesso."
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Identidade Windows" FontSize="18" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="IdentityText"/>
+                    <TextBlock x:Name="RoleText" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Dados compartilhados" FontSize="18" FontWeight="SemiBold"/>
+                    <TextBox x:Name="RootBox"
+                             Header="Pasta raiz"
+                             PlaceholderText="\\servidor\pasta\RPA-Version-Control"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Selecionar" Click="BrowseRoot_Click"/>
+                        <Button Content="Salvar conexão"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Click="SaveRoot_Click"/>
+                    </StackPanel>
+                    <InfoBar x:Name="RootInfo" IsOpen="False"/>
+                    <TextBlock Text="Dica corporativa: também é possível distribuir um arquivo shared-root.txt ao lado do executável."
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Comportamento do app" FontSize="18" FontWeight="SemiBold"/>
+                    <ToggleSwitch x:Name="StartWithWindowsToggle" Header="Iniciar com o Windows"/>
+                    <ToggleSwitch x:Name="StartMinimizedToggle" Header="Iniciar minimizado na bandeja"/>
+                    <NumberBox x:Name="PollSecondsBox"
+                               Header="Intervalo de atualização (segundos)"
+                               Minimum="15"
+                               Maximum="300"
+                               SpinButtonPlacementMode="Compact"/>
+                    <Button Content="Salvar preferências" HorizontalAlignment="Left" Click="SaveLocal_Click"/>
+                </StackPanel>
+            </Border>
+
+            <Border x:Name="SecurityCard" Style="{StaticResource CardStyle}" Visibility="Collapsed">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Acesso de QA e administração" FontSize="18" FontWeight="SemiBold"/>
+                    <InfoBar IsOpen="True"
+                             Severity="Informational"
+                             Message="Use o usuário Windows completo (DOMINIO\usuario) ou grupos de domínio. Não há senha embutida."/>
+                    <TextBox x:Name="QaUsersBox"
+                             Header="Usuários QA — um por linha"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             MinHeight="110"/>
+                    <TextBox x:Name="QaGroupsBox"
+                             Header="Grupos Windows QA — um por linha"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             MinHeight="90"/>
+                    <TextBox x:Name="AdminUsersBox"
+                             Header="Administradores — um por linha"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             MinHeight="90"/>
+                    <Button Content="Salvar acessos"
+                            Style="{StaticResource AccentButtonStyle}"
+                            HorizontalAlignment="Left"
+                            Click="SaveSecurity_Click"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

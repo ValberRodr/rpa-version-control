@@ -1,0 +1,69 @@
+<Page
+    x:Class="RpaVersionControl.App.Views.HistoryPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Padding="{StaticResource PagePadding}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock Text="Histórico de versões" Style="{StaticResource PageTitleStyle}"/>
+            <TextBlock Text="Compare qualquer versão com a atual ou restaure uma versão aprovada."
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
+
+        <ComboBox x:Name="ProjectCombo"
+                  Grid.Row="2"
+                  Width="420"
+                  HorizontalAlignment="Left"
+                  DisplayMemberPath="Name"
+                  SelectionChanged="ProjectCombo_SelectionChanged"/>
+
+        <ListView x:Name="VersionsList" Grid.Row="4" SelectionMode="None">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource CardStyle}" Margin="0,0,0,10">
+                        <Grid ColumnSpacing="14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="190"/>
+                                <ColumnDefinition Width="190"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock FontSize="20"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center">
+                                <Run Text="v"/>
+                                <Run Text="{Binding Version}"/>
+                            </TextBlock>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{Binding Summary}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding ChangeId}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="DEV" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Text="{Binding DeveloperDisplayName}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="3">
+                                <TextBlock Text="QA" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Text="{Binding QaDisplayName}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
+                                <Button Content="Comparar" Tag="{Binding Version}" Click="Compare_Click"/>
+                                <Button Content="Restaurar" Tag="{Binding Version}" Click="Rollback_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Page>
